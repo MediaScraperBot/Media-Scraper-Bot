@@ -6,17 +6,73 @@ A comprehensive media downloader with GUI for Reddit, Twitter/X, websites, and O
 ![Platform](https://img.shields.io/badge/platform-Windows-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-## ⚠️ LEGAL DISCLAIMER
+---
 
-**FOR EDUCATIONAL PURPOSES ONLY.** By using this software, you agree:
+## 💝 Support This Project
 
-- **User Responsibility**: You are solely responsible for how you use this tool. The creator assumes NO liability for any misuse, copyright infringement, or violations of Terms of Service.
-- **Comply with Laws**: You must comply with all applicable laws and platform Terms of Service.
-- **No Warranty**: Provided "AS IS" without guarantees. May stop working due to API changes.
-- **Account Risks**: Automated tools may violate platform ToS and result in account suspension.
-- **No Illegal Use**: Do not use for unauthorized downloading, copyright circumvention, harassment, or illegal activities.
+I work on this project in my free time. If you find it useful, consider buying me a coffee!
 
-**USE AT YOUR OWN RISK.** The creator is not liable for any consequences of using this software.
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Support-yellow?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/sknight)
+
+**For updates or issues, contact:** MyMediaScraperBot@gmail.com
+
+---
+
+## ⚠️ LEGAL DISCLAIMER & TERMS OF USE
+
+**READ CAREFULLY BEFORE USING THIS SOFTWARE**
+
+### BY USING THIS SOFTWARE, YOU AGREE TO THE FOLLOWING TERMS:
+
+#### 📚 Educational Purposes Only
+This tool is provided for **educational and personal archival purposes only**.
+
+#### 👤 User Responsibility & Liability
+- **YOU** are solely responsible for how you use this software
+- The creator assumes **NO LIABILITY** for any misuse, violations of terms of service, copyright infringement, or illegal activities
+- **YOU** accept all legal consequences and risks of using this tool
+- Using this software means **YOU** are liable, not the creator
+
+#### ⚖️ Legal Compliance Required
+You **MUST** comply with:
+- All applicable laws and regulations in your jurisdiction
+- Copyright laws and intellectual property rights
+- Platform Terms of Service (Reddit, Twitter, OnlyFans, etc.)
+- Website terms and conditions
+
+**WARNING:** Unauthorized downloading of copyrighted content may be **ILLEGAL** in your jurisdiction.
+
+#### 🚫 Prohibited Uses
+Do **NOT** use this tool for:
+- Downloading content without proper authorization or permission
+- Circumventing copyright protection or DRM
+- Violating platform Terms of Service
+- Stalking, harassment, or privacy violations
+- Distributing pirated or unauthorized content
+- Any illegal activities
+
+#### ⚠️ No Warranty
+- This software is provided **"AS IS"** without any warranties or guarantees
+- May stop working at any time due to API changes, platform updates, or policy changes
+- No guarantee of functionality, reliability, or fitness for any purpose
+
+#### 🔧 Third-Party Tools
+- Integrates with third-party tools (OF-DL, gallery-dl, yt-dlp, Playwright)
+- These are independently maintained and NOT created by this project
+- We are **NOT** responsible for their functionality, legality, or updates
+
+#### 🚨 Account Risks
+- Using automated tools may violate platform Terms of Service
+- Risk of account suspension, ban, or legal action
+- **USE AT YOUR OWN RISK**
+
+---
+
+**BY DOWNLOADING, INSTALLING, OR USING THIS SOFTWARE, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND AGREE TO THESE TERMS.**
+
+**IF YOU DO NOT AGREE, DO NOT USE THIS SOFTWARE.**
+
+---
 
 ## ✨ Features
 
