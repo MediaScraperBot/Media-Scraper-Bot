@@ -122,69 +122,6 @@ On first launch, the application will:
    - Paste all 5 credentials
    - Click **Save**
 
-### Discord Bot (Optional - For Remote Control)
-
-1. **Create Discord Application**
-   - Visit: https://discord.com/developers/applications
-   - Click "New Application"
-   - Give it a name
-
-2. **Create Bot**
-   - Go to "Bot" section
-   - Click "Add Bot"
-   - Copy the Bot Token
-
-3. **Enable Intents**
-   - Under "Bot" section
-   - Enable **"Message Content Intent"**
-   - Enable **"Server Members Intent"**
-
-4. **Invite Bot to Server**
-   - Go to "OAuth2" → "URL Generator"
-   - Select scopes: `bot`
-   - Select permissions: `Send Messages`, `Read Message History`
-   - Copy generated URL and open in browser
-   - Select your server and authorize
-
-5. **Get Channel IDs**
-   - Enable Developer Mode in Discord (User Settings → Advanced)
-   - Right-click channel → Copy ID
-   - Get IDs for:
-     - General channel (status updates)
-     - Downloads channel (download notifications)
-
-6. **Configure in Settings**
-   - Paste Bot Token
-   - Paste General Channel ID
-   - Paste Downloads Channel ID
-   - Enable "Auto-start bot on launch" if desired
-   - Click **Save**
-
-## 📁 OnlyFans Setup (Optional)
-
-OnlyFans requires external tool: **OF-DL**
-
-1. **Download OF-DL**
-   - Visit: https://git.ofdl.tools/sim0n00ps/OF-DL/releases
-   - Download latest `OF-DL.exe`
-
-2. **Place in Folder**
-   - Create folder: `C:\Tools\OF-DL\`
-   - Place `OF-DL.exe` there
-
-3. **Configure in Application**
-   - Open Media Scraper Bot
-   - Go to **OnlyFans** tab
-   - Click **Browse** and select `OF-DL.exe`
-   - Configure download options in **Settings** tab
-   - Click **Launch OF-DL** when ready
-
-See [THIRD_PARTY.md](THIRD_PARTY.md) for more details.
-
-## ✅ Verification
-
-Test your setup:
-
 ### Test Reddit
 1. Go to **Reddit** tab
 2. Click **Add Subreddit**
@@ -238,7 +175,6 @@ Now that you're set up:
 1. **Read the README** - [README.md](README.md) for feature overview
 2. **Explore the GUI** - Each tab has different functionality
 3. **Check Duplicates Tab** - Manage duplicate files
-4. **Try Discord Bot** - Control remotely (if configured)
 5. **Adjust Settings** - Customize download behavior
 
 ## 🆘 Getting Help

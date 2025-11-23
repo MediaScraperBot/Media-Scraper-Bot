@@ -193,7 +193,6 @@ git commit -m "Fixed commit message"
 1. **Immediately revoke ALL API credentials**
    - Reddit: Delete app at reddit.com/prefs/apps
    - Twitter: Regenerate all keys
-   - Discord: Regenerate bot token
 
 2. **Remove from Git history**
    ```bash

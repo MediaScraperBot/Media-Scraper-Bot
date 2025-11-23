@@ -172,7 +172,6 @@ After uploading to GitHub, new users should be able to:
 **What stays on your computer:**
 - Your Reddit API credentials
 - Your Twitter API credentials  
-- Your Discord bot token
 - Your subreddit/username/website lists
 - Your download history
 - All your downloaded files

@@ -14,7 +14,6 @@ from .twitter_scraper import TwitterScraper
 from .website_scraper import WebsiteScraper
 from .history import DownloadHistory
 from .sitemap_scanner import SitemapScanner, GalleryDLDownloader
-from .discord_bot import ScraperDiscordBot
 from .user_manager import UserManager
 from .duplicate_checker import DuplicateChecker
 from .download_queue import DownloadQueue
@@ -322,9 +321,6 @@ class ScraperGUI:
         self.sitemap_scanner = SitemapScanner()
         self.gallery_dl = GalleryDLDownloader()
         
-        # Initialize Discord bot
-        self.discord_bot = ScraperDiscordBot(gui_app=self)
-        
         # Progress tracking
         self.current_progress = 0
         self.total_items = 0
@@ -372,9 +368,6 @@ class ScraperGUI:
         
         # Log migration status after GUI is ready
         self.root.after(200, self._check_migration_status)
-        
-        # Auto-start Discord bot if enabled
-        self.root.after(500, self._auto_start_discord_bot)
 
         # Auto-organize downloads at startup (if enabled)
         self.root.after(800, self._auto_organize_startup)
@@ -456,27 +449,6 @@ and agree to these terms. If you click NO, the application will close."""
             for platform, stat in stats.items():
                 if stat['total'] > 0:
                     self.log(f"  {platform}: {stat['active']} active, {stat['inactive']} inactive")
-    
-    def _auto_start_discord_bot(self):
-        """Auto-start Discord bot if enabled in settings"""
-        try:
-            enabled = self.config.get('discord.enabled', False)
-            autostart = self.config.get('discord.autostart', False)
-            bot_token = self.config.get('discord.bot_token', '')
-            
-            self.log(f"Discord enabled: {enabled}, Auto-start: {autostart}")
-            self.log(f"Bot token configured: {bool(bot_token and bot_token != 'YOUR_BOT_TOKEN')}")
-            
-            if enabled and autostart:
-                if bot_token and bot_token != 'YOUR_BOT_TOKEN':
-                    self.log("🤖 Auto-starting Discord bot...")
-                    self.start_discord_bot()
-                else:
-                    self.log("⚠️ Discord bot token not configured")
-            else:
-                self.log("ℹ️ Discord bot is disabled in settings")
-        except Exception as e:
-            self.log(f"⚠️ Failed to auto-start Discord bot: {str(e)}")
     
     def create_instructions_tab(self):
         """Create instructions tab with usage guide"""
@@ -632,27 +604,13 @@ For direct API access (advanced users), click the "Show OnlyFans API Instruction
         
         # Settings Tab section
         self._add_section_header(content_frame, "⚙️ Settings Tab")
-        settings_text = """• API Credentials: Configure Reddit, Twitter, Discord bot tokens
+        settings_text = """• API Credentials: Configure Reddit, Twitter API credentials
 • Help Buttons (?): Click for step-by-step credential setup instructions
 • Download Path: Set where media files are saved
 • OnlyFans Options: Configure what content types to download
 • Auto-Organize: Automatically organize downloads by source on startup
-• History Management: View stats and clear download history
-• Discord Bot: Optional remote control via Discord commands"""
+• History Management: View stats and clear download history"""
         self._add_text_block(content_frame, settings_text)
-        
-        # Discord Bot section
-        self._add_section_header(content_frame, "🤖 Discord Bot (Optional)")
-        discord_text = """Commands you can use in Discord:
-• !scrapeall - Start scraping all active sources
-• !addsubreddit <name> - Add subreddit to active list
-• !addsite <url> [folder] - Add website URL
-• !status - Check bot status and progress
-• !pause / !resume - Control scraping
-• !help - Show all available commands
-
-Setup in Settings tab with bot token and channel IDs."""
-        self._add_text_block(content_frame, discord_text)
         
         # Tips & Tricks section
         self._add_section_header(content_frame, "💡 Tips & Tricks")
@@ -663,7 +621,6 @@ Setup in Settings tab with bot token and channel IDs."""
 ✓ Playwright handles sites that require JavaScript (slower but thorough)
 ✓ Resume feature lets you continue interrupted website scraping
 ✓ Use custom folder names for better organization: "url FolderName"
-✓ Discord bot lets you control scraping from your phone
 ✓ Activity Log (bottom panel) shows real-time progress and errors
 ✓ Save Activity Log with Ctrl+S for troubleshooting"""
         self._add_text_block(content_frame, tips_text)
@@ -1548,66 +1505,11 @@ Ctrl+Tab - Switch Between Tabs"""
         ttk.Button(history_btn_frame, text="View Statistics", command=self.show_history_stats).pack(side=tk.LEFT, padx=2)
         ttk.Button(history_btn_frame, text="Clear All History", command=self.clear_all_history).pack(side=tk.LEFT, padx=2)
         
-        # Discord bot settings
-        discord_frame = ttk.LabelFrame(scrollable_frame, text="Discord Bot Settings", padding=10, relief='solid', borderwidth=2)
-        discord_frame.pack(fill='x', padx=10, pady=5)
-
         # Log and organization buttons
         logscan_frame = ttk.LabelFrame(scrollable_frame, text="Diagnostics & Log Export", padding=10, relief='solid', borderwidth=1)
         logscan_frame.pack(fill='x', padx=10, pady=5)
         ttk.Button(logscan_frame, text="Save Activity Log", command=self.save_activity_log).pack(side=tk.LEFT, padx=5)
         ttk.Button(logscan_frame, text="Organize Downloads (videos/images/gifs)", command=self.organize_downloads).pack(side=tk.LEFT, padx=5)
-
-        # Enable/disable checkbox
-        self.discord_enabled = tk.BooleanVar(value=bool(self.config.get('discord.enabled', False)))
-        ttk.Checkbutton(discord_frame, text="Enable Discord Bot", variable=self.discord_enabled).grid(row=0, column=0, columnspan=2, sticky='w', pady=2)
-        
-        ttk.Label(discord_frame, text="Bot Token:").grid(row=1, column=0, sticky='w', pady=2)
-        self.discord_bot_token = ttk.Entry(discord_frame, width=50, show='*')
-        self.discord_bot_token.grid(row=1, column=1, sticky='ew', pady=2, padx=5)
-        self.discord_bot_token.insert(0, str(self.config.get('discord.bot_token', '')))
-        
-        ttk.Label(discord_frame, text="General Channel ID:").grid(row=2, column=0, sticky='w', pady=2)
-        self.discord_general_channel = ttk.Entry(discord_frame, width=50)
-        self.discord_general_channel.grid(row=2, column=1, sticky='ew', pady=2, padx=5)
-        self.discord_general_channel.insert(0, str(self.config.get('discord.general_channel_id', '')))
-        ttk.Label(discord_frame, text="(Status updates, bot online, etc.)", 
-                 foreground="gray", font=('TkDefaultFont', 8)).grid(row=2, column=2, sticky='w', padx=5)
-        
-        ttk.Label(discord_frame, text="Downloads Channel ID:").grid(row=3, column=0, sticky='w', pady=2)
-        self.discord_downloads_channel = ttk.Entry(discord_frame, width=50)
-        self.discord_downloads_channel.grid(row=3, column=1, sticky='ew', pady=2, padx=5)
-        self.discord_downloads_channel.insert(0, str(self.config.get('discord.downloads_channel_id', '')))
-        ttk.Label(discord_frame, text="(Download completions, new files)", 
-                 foreground="gray", font=('TkDefaultFont', 8)).grid(row=3, column=2, sticky='w', padx=5)
-        
-        # Auto-start option
-        self.discord_autostart = tk.BooleanVar(value=bool(self.config.get('discord.autostart', False)))
-        ttk.Checkbutton(discord_frame, text="Auto-start bot when GUI launches", 
-                       variable=self.discord_autostart).grid(row=4, column=0, columnspan=2, sticky='w', pady=2)
-        
-        # Discord bot control buttons
-        discord_btn_frame = ttk.Frame(discord_frame)
-        discord_btn_frame.grid(row=5, column=0, columnspan=2, sticky='w', pady=5)
-        
-        # Make Start Bot button more prominent
-        self.start_bot_btn = ttk.Button(discord_btn_frame, text="▶ Start Bot", 
-                                        command=self.start_discord_bot, style="Accent.TButton")
-        self.start_bot_btn.pack(side=tk.LEFT, padx=2)
-        
-        self.stop_bot_btn = ttk.Button(discord_btn_frame, text="⏹ Stop Bot", 
-                                       command=self.stop_discord_bot, state='disabled')
-        self.stop_bot_btn.pack(side=tk.LEFT, padx=2)
-        
-        # Bot status indicator
-        self.bot_status_label = ttk.Label(discord_btn_frame, text="Bot: Not Running", 
-                                         foreground="red")
-        self.bot_status_label.pack(side=tk.LEFT, padx=10)
-        
-        ttk.Label(discord_frame, text="Commands: !scan, !scrapeall, !adduser, !addsubreddit, !addsite, !status, !list, !channelid, !commands", 
-                 foreground="gray", wraplength=400).grid(row=6, column=0, columnspan=3, sticky='w', pady=(5, 0))
-        
-        discord_frame.columnconfigure(1, weight=1)
         
         # Save button
         ttk.Button(scrollable_frame, text="Save Settings", command=self.save_settings).pack(pady=10)
@@ -2342,15 +2244,6 @@ Duplicate Detection:
         self.config.set('downloads.base_path', self.download_path.get())
         self.config.set('downloads.redownload_deleted_files', self.redownload_deleted.get())
         
-        self.config.set('discord.enabled', self.discord_enabled.get())
-        self.config.set('discord.bot_token', self.discord_bot_token.get())
-        self.config.set('discord.general_channel_id', self.discord_general_channel.get())
-        self.config.set('discord.downloads_channel_id', self.discord_downloads_channel.get())
-        self.config.set('discord.autostart', self.discord_autostart.get())
-        
-        # Keep notification_channel_id for backward compatibility (use general channel)
-        self.config.set('discord.notification_channel_id', self.discord_general_channel.get())
-        
         # Reset scrapers to use new credentials
         self.reddit_scraper = None
         self.twitter_scraper = None
@@ -2423,7 +2316,6 @@ Duplicate Detection:
         date_info = ""
         if start_date or end_date:
             date_info = f" (from {start_date_str if start_date else 'beginning'} to {end_date_str if end_date else 'now'})"
-        self._send_discord_notification(f"🚀 Starting scrape of {len(subreddits)} subreddits{date_info}...", channel_type='downloads')
         
         try:
             if not self.reddit_scraper:
@@ -2477,7 +2369,6 @@ Duplicate Detection:
             self.reddit_details_var.set(f"Total files downloaded: {total_downloaded}")
             
             # Send Discord completion notification
-            self._send_discord_notification(f"✅ Subreddit scraping complete! Downloaded {total_downloaded} files from {total_subreddits} subreddits.", channel_type='downloads')
             
             # Auto-organize downloads if enabled
             if bool(self.config.get('downloads.auto_organize_after_scrape', True)):
@@ -2491,7 +2382,6 @@ Duplicate Detection:
         except Exception as e:
             self.log(f"Error: {str(e)}")
             self.update_status("Error occurred during scraping")
-            self._send_discord_notification(f"❌ Error during subreddit scraping: {str(e)}")
             self.end_progress()
         
         finally:
@@ -2526,7 +2416,6 @@ Duplicate Detection:
         self.update_status("Initializing Reddit scraper...")
         
         # Send Discord notification to general channel that scraping started
-        self._send_discord_notification(f"🚀 Starting scrape of {len(users)} Reddit users...", channel_type='downloads')
         
         try:
             if not self.reddit_scraper:
@@ -2583,12 +2472,10 @@ Duplicate Detection:
             self.reddit_details_var.set(f"Total files downloaded: {total_downloaded}")
             
             # Send Discord notifications
-            self._send_discord_notification(f"✅ Reddit user scraping complete!", channel_type='downloads')
             if total_downloaded > 0:
                 download_msg = f"📥 **Reddit Scrape Complete**\n"
                 download_msg += f"• Users Scraped: {total_users}\n"
                 download_msg += f"• Files Downloaded: {total_downloaded}"
-                self._send_discord_notification(download_msg, channel_type='downloads')
             
             # Auto-organize downloads if enabled
             if bool(self.config.get('downloads.auto_organize_after_scrape', True)):
@@ -2602,7 +2489,6 @@ Duplicate Detection:
         except Exception as e:
             self.log(f"Error: {str(e)}")
             self.update_status("Error occurred during scraping")
-            self._send_discord_notification(f"❌ Error during Reddit user scraping: {str(e)}", channel_type='general')
             self.end_progress()
         
         finally:
@@ -2721,7 +2607,6 @@ Duplicate Detection:
             
             # Send Discord notification
             total_downloaded = sum(len(self.twitter_scraper.scrape_user(u, base_path, limit=0, progress_callback=None)) for u in [])
-            self._send_discord_notification(f"✅ Twitter scraping complete! Processed {total_users} users.", channel_type='downloads')
         
         except Exception as e:
             self.log(f"Error: {str(e)}")
@@ -2818,7 +2703,6 @@ Duplicate Detection:
                 self.log("No websites to scrape")
                 return
             
-            self._send_discord_notification(f"🚀 Starting scrape of {len(websites_to_scrape)} websites...", channel_type='downloads')
 
             # Get max_pages, scroll_count, and workers from UI
             try:
@@ -2938,7 +2822,6 @@ Duplicate Detection:
                 download_msg += f"• Files Downloaded: {len(downloads)}\n"
                 download_msg += f"• Total Size: {total_size_mb:.2f} MB\n"
                 download_msg += f"• Websites Processed: {completed_count}"
-                self._send_discord_notification(download_msg, channel_type='downloads')
             
             # Auto-organize downloads if enabled
             if downloads and bool(self.config.get('downloads.auto_organize_after_scrape', True)):
@@ -3344,17 +3227,6 @@ Duplicate Detection:
         
         self.progress_bar['value'] = self.current_progress
         self.update_progress_status()
-        
-        # Send Discord notification if bot is running
-        if hasattr(self, 'discord_bot') and self.discord_bot:
-            try:
-                if self.discord_bot.loop:
-                    asyncio.run_coroutine_threadsafe(
-                        self.discord_bot.send_progress_update(self.current_progress, self.total_items),
-                        self.discord_bot.loop
-                    )
-            except:
-                pass  # Discord bot might not be running
     
     def update_progress_status(self):
         """Update status text with progress"""
@@ -4870,86 +4742,6 @@ Duplicate Detection:
                 self.log("No items to migrate or migration failed.")
                 messagebox.showinfo("Migration", "No items found to migrate.")
     
-    # Discord bot management
-    def start_discord_bot(self):
-        """Start Discord bot in background thread"""
-        if not self.config.get('discord.enabled', False):
-            messagebox.showwarning("Discord Bot", "Discord bot is not enabled in settings")
-            return
-        
-        bot_token = self.config.get('discord.bot_token', '')
-        if not bot_token:
-            messagebox.showerror("Discord Bot", "Bot token not configured")
-            return
-        
-        try:
-            thread = threading.Thread(target=self._start_discord_bot_thread)
-            thread.daemon = True
-            thread.start()
-            self.log("Discord bot starting...")
-            
-            # Update UI
-            self.start_bot_btn.config(state='disabled')
-            self.stop_bot_btn.config(state='normal')
-            self.bot_status_label.config(text="Bot: Starting...", foreground="orange")
-            
-            # Check connection after a delay
-            self.root.after(3000, self._check_bot_connection)
-        except Exception as e:
-            self.log(f"Error starting Discord bot: {str(e)}")
-            messagebox.showerror("Discord Bot Error", f"Failed to start bot: {str(e)}")
-    
-    def stop_discord_bot(self):
-        """Stop Discord bot"""
-        try:
-            if self.discord_bot and self.discord_bot.running:
-                self.discord_bot.stop_bot()
-                self.log("Discord bot stopping...")
-                
-                # Update UI
-                self.start_bot_btn.config(state='normal')
-                self.stop_bot_btn.config(state='disabled')
-                self.bot_status_label.config(text="Bot: Not Running", foreground="red")
-            else:
-                messagebox.showinfo("Discord Bot", "Bot is not running")
-        except Exception as e:
-            self.log(f"Error stopping Discord bot: {str(e)}")
-            messagebox.showerror("Discord Bot Error", f"Failed to stop bot: {str(e)}")
-    
-    def _check_bot_connection(self):
-        """Check if bot connected successfully"""
-        if self.discord_bot and self.discord_bot.running:
-            self.bot_status_label.config(text="Bot: Running ✓", foreground="green")
-        else:
-            self.bot_status_label.config(text="Bot: Failed to Connect", foreground="red")
-            self.start_bot_btn.config(state='normal')
-            self.stop_bot_btn.config(state='disabled')
-    
-    def _start_discord_bot_thread(self):
-        """Thread to run Discord bot"""
-        try:
-            bot_token = self.config.get('discord.bot_token')
-            self.discord_bot.start_bot(bot_token)
-        except Exception as e:
-            self.log(f"Discord bot error: {str(e)}")
-    
-    def _send_discord_notification(self, message, channel_type='general'):
-        """Send a notification to Discord (if bot is running)
-        
-        Args:
-            message: The message to send
-            channel_type: 'general' for status updates, 'downloads' for download details
-        """
-        if self.discord_bot and self.discord_bot.running and self.discord_bot.loop:
-            try:
-                asyncio.run_coroutine_threadsafe(
-                    self.discord_bot.send_notification(message, channel_type=channel_type),
-                    self.discord_bot.loop
-                )
-            except Exception as e:
-                # Silently fail if Discord bot isn't running
-                pass
-
 
 def main():
     """Main entry point"""

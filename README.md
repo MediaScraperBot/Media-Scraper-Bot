@@ -81,7 +81,6 @@ Do **NOT** use this tool for:
 - **Website Scraper**: Universal web scraper with Playwright rendering for JavaScript-heavy sites
 - **OnlyFans Downloader**: Integrated OF-DL for authenticated downloads
 - **Duplicate Detection**: SHA256-based duplicate checking across folders
-- **Discord Bot Integration**: Control scraping via Discord commands
 - **Download Queue**: Persistent queue with retry logic
 - **Auto-organize**: Categorize downloads by source type
 
@@ -91,7 +90,6 @@ Do **NOT** use this tool for:
 - **Windows OS** (tested on Windows 10/11)
 - **Reddit API credentials** (free)
 - **Twitter API credentials** (optional, paid tier recommended)
-- **Discord Bot** (optional)
 
 ## 🚀 Quick Start
 
@@ -190,12 +188,6 @@ python main.py
 - Global sweep across entire Downloads folder
 
 ## 🛠️ Advanced Features
-
-### Discord Bot Integration
-1. Create Discord bot at: https://discord.com/developers/applications
-2. Enable required intents (Message Content)
-3. Add bot token and channel IDs to Settings
-4. Use commands: `!scrapeall`, `!addsubreddit`, `!addsite`, etc.
 
 ### Download Queue
 - Persistent queue survives crashes

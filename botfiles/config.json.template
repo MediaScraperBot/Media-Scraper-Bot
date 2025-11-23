@@ -11,12 +11,6 @@
     "access_token": "YOUR_TWITTER_ACCESS_TOKEN_HERE",
     "access_token_secret": "YOUR_TWITTER_ACCESS_TOKEN_SECRET_HERE"
   },
-  "discord": {
-    "token": "YOUR_DISCORD_BOT_TOKEN_HERE",
-    "general_channel_id": "YOUR_GENERAL_CHANNEL_ID_HERE",
-    "downloads_channel_id": "YOUR_DOWNLOADS_CHANNEL_ID_HERE",
-    "auto_start": false
-  },
   "onlyfans": {
     "download_posts": true,
     "download_paid_posts": true,
