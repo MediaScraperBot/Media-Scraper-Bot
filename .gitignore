@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# User Data - CONTAINS SENSITIVE INFORMATION
+botfiles/config.json
+botfiles/download_history.json
+botfiles/download_queue.json
+botfiles/file_hashes.json
+botfiles/website_scrape_state.json
+botfiles/users_status.json
+botfiles/scraper_activity.log
+botfiles/video_scan_report.txt
+
+# User Lists - May contain private information
+botfiles/subreddit.txt
+botfiles/usernames.txt
+botfiles/websites.txt
+
+# Downloads folder - User's downloaded content
+Downloads/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.lnk

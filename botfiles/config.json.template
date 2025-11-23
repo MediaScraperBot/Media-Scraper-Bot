@@ -1,0 +1,50 @@
+{
+  "reddit": {
+    "client_id": "YOUR_REDDIT_CLIENT_ID_HERE",
+    "client_secret": "YOUR_REDDIT_CLIENT_SECRET_HERE",
+    "user_agent": "MediaScraper/1.0"
+  },
+  "twitter": {
+    "bearer_token": "YOUR_TWITTER_BEARER_TOKEN_HERE",
+    "api_key": "YOUR_TWITTER_API_KEY_HERE",
+    "api_secret": "YOUR_TWITTER_API_SECRET_HERE",
+    "access_token": "YOUR_TWITTER_ACCESS_TOKEN_HERE",
+    "access_token_secret": "YOUR_TWITTER_ACCESS_TOKEN_SECRET_HERE"
+  },
+  "discord": {
+    "token": "YOUR_DISCORD_BOT_TOKEN_HERE",
+    "general_channel_id": "YOUR_GENERAL_CHANNEL_ID_HERE",
+    "downloads_channel_id": "YOUR_DOWNLOADS_CHANNEL_ID_HERE",
+    "auto_start": false
+  },
+  "onlyfans": {
+    "download_posts": true,
+    "download_paid_posts": true,
+    "download_messages": true,
+    "download_paid_messages": true,
+    "download_stories": true,
+    "download_highlights": true,
+    "download_archived": true,
+    "download_streams": true,
+    "download_images": true,
+    "download_videos": true,
+    "download_audios": true,
+    "download_avatar_header": true,
+    "folder_per_post": false,
+    "folder_per_paid_post": false,
+    "folder_per_message": false,
+    "folder_per_paid_message": false,
+    "skip_ads": false,
+    "ignore_own_messages": false,
+    "include_expired": false,
+    "include_restricted": false,
+    "download_duplicates": false,
+    "download_incrementally": false,
+    "ofdl_exe_path": ""
+  },
+  "downloads": {
+    "base_path": "Downloads",
+    "redownload_deleted_files": true,
+    "auto_organize_startup": false
+  }
+}
