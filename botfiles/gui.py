@@ -1711,11 +1711,55 @@ Ctrl+Tab    Switch Tabs
         messagebox.showinfo("Keyboard Shortcuts", shortcuts)
     
     def _show_reddit_api_help(self):
-        """Show instructions for obtaining Reddit API credentials"""
-        help_text = """📝 How to Get Reddit API Credentials
-
-1. Go to: https://www.reddit.com/prefs/apps
-
+        """Show instructions for obtaining Reddit API credentials with clickable links"""
+        # Create a custom dialog with clickable links
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Reddit API Help")
+        dialog.geometry("700x600")
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Main frame with scrollbar
+        main_frame = ttk.Frame(dialog, padding=10)
+        main_frame.pack(fill='both', expand=True)
+        
+        canvas = tk.Canvas(main_frame)
+        scrollbar = ttk.Scrollbar(main_frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Content
+        content = ttk.Frame(scrollable_frame, padding=10)
+        content.pack(fill='both', expand=True)
+        
+        ttk.Label(content, text="📝 How to Get Reddit API Credentials", 
+                 font=('TkDefaultFont', 12, 'bold')).pack(anchor='w', pady=(0, 10))
+        
+        # Step 1 with clickable link
+        ttk.Label(content, text="1. Go to Reddit Apps page:", 
+                 font=('TkDefaultFont', 10, 'bold')).pack(anchor='w', pady=(5, 2))
+        
+        link1_frame = ttk.Frame(content)
+        link1_frame.pack(anchor='w', padx=20)
+        link1 = tk.Text(link1_frame, height=1, width=50, wrap='none', relief='flat', 
+                       bg=dialog.cget('bg'), font=('TkDefaultFont', 9), cursor='hand2')
+        link1.insert('1.0', 'https://www.reddit.com/prefs/apps')
+        link1.config(state='disabled', fg='blue')
+        link1.pack(side='left')
+        link1.bind('<Button-1>', lambda e: self._copy_and_open('https://www.reddit.com/prefs/apps'))
+        
+        ttk.Label(content, text="   (Click to copy and open)", 
+                 foreground='gray', font=('TkDefaultFont', 8)).pack(anchor='w', padx=20)
+        
+        # Instructions
+        instructions = """
 2. Scroll down and click "Create App" or "Create Another App"
 
 3. Fill out the form:
@@ -1728,30 +1772,121 @@ Ctrl+Tab    Switch Tabs
 4. Click "Create app"
 
 5. Copy your credentials:
-   • Client ID: The string under your app name (looks like: 3m0Ss-YW_PxanS2APjoIFg)
-   • Client Secret: The "secret" field (longer alphanumeric string)
-   • User Agent: Use format "YourAppName/1.0" (e.g., "MediaScraper/1.0")
+   • Client ID: The string under your app name
+     (looks like: 3m0Ss-YW_PxanS2APjoIFg)
+   • Client Secret: The "secret" field
+     (longer alphanumeric string)
+   • User Agent: Use format "YourAppName/1.0"
+     (e.g., "MediaScraper/1.0")
 
 6. Paste these values into the Settings tab and click Save
-
-Note: Keep your Client Secret private!
 """
-        messagebox.showinfo("Reddit API Help", help_text)
+        ttk.Label(content, text=instructions, justify='left').pack(anchor='w', pady=(10, 5))
+        
+        # Error message section
+        error_frame = ttk.Frame(content, relief='solid', borderwidth=1, padding=10)
+        error_frame.pack(fill='x', pady=(10, 5))
+        
+        ttk.Label(error_frame, text="⚠️ Application Limit Reached?", 
+                 font=('TkDefaultFont', 10, 'bold'), foreground='red').pack(anchor='w')
+        
+        ttk.Label(error_frame, text="""
+If you see an error about reaching the application limit:
+"You cannot create any more applications..."
+
+You need to contact Reddit Support:""", 
+                 justify='left').pack(anchor='w', pady=(5, 2))
+        
+        link2_frame = ttk.Frame(error_frame)
+        link2_frame.pack(anchor='w', padx=10)
+        link2 = tk.Text(link2_frame, height=2, width=60, wrap='word', relief='flat',
+                       bg=error_frame.cget('bg'), font=('TkDefaultFont', 9), cursor='hand2')
+        link2.insert('1.0', 'https://support.reddithelp.com/hc/en-us/requests/new?ticket_form_id=14868593862164')
+        link2.config(state='disabled', fg='blue')
+        link2.pack(side='left')
+        link2.bind('<Button-1>', lambda e: self._copy_and_open('https://support.reddithelp.com/hc/en-us/requests/new?ticket_form_id=14868593862164'))
+        
+        ttk.Label(error_frame, text="   (Click to copy and open support form)", 
+                 foreground='gray', font=('TkDefaultFont', 8)).pack(anchor='w', padx=10)
+        
+        # Security note
+        note_frame = ttk.Frame(content, relief='solid', borderwidth=1, padding=10)
+        note_frame.pack(fill='x', pady=(10, 5))
+        ttk.Label(note_frame, text="🔒 Security Note:", 
+                 font=('TkDefaultFont', 10, 'bold'), foreground='#27ae60').pack(anchor='w')
+        ttk.Label(note_frame, text="Keep your Client Secret private! Never share it publicly.",
+                 wraplength=600).pack(anchor='w', pady=(2, 0))
+        
+        # Pack canvas and scrollbar
+        canvas.pack(side=tk.LEFT, fill='both', expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill='y')
+        
+        # Close button
+        ttk.Button(dialog, text="Close", command=dialog.destroy).pack(pady=10)
     
     def _show_twitter_api_help(self):
-        """Show instructions for obtaining Twitter API credentials"""
-        help_text = """📝 How to Get Twitter/X API Credentials
-
-⚠️ Twitter API Access Requirements:
-- Free tier is very limited (read-only, low rate limits)
-- Basic tier ($100/month) recommended for scraping
-- You need a Twitter Developer Account
-
-Steps:
-
-1. Go to: https://developer.twitter.com/
-
-2. Sign up for a Developer Account
+        """Show instructions for obtaining Twitter API credentials with clickable links"""
+        # Create a custom dialog with clickable links
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Twitter/X API Help")
+        dialog.geometry("700x600")
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Main frame with scrollbar
+        main_frame = ttk.Frame(dialog, padding=10)
+        main_frame.pack(fill='both', expand=True)
+        
+        canvas = tk.Canvas(main_frame)
+        scrollbar = ttk.Scrollbar(main_frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Content
+        content = ttk.Frame(scrollable_frame, padding=10)
+        content.pack(fill='both', expand=True)
+        
+        ttk.Label(content, text="📝 How to Get Twitter/X API Credentials", 
+                 font=('TkDefaultFont', 12, 'bold')).pack(anchor='w', pady=(0, 10))
+        
+        # Warning
+        warning_frame = ttk.Frame(content, relief='solid', borderwidth=1, padding=10)
+        warning_frame.pack(fill='x', pady=(5, 10))
+        
+        ttk.Label(warning_frame, text="⚠️ Twitter API Access Requirements:", 
+                 font=('TkDefaultFont', 10, 'bold'), foreground='orange').pack(anchor='w')
+        ttk.Label(warning_frame, text="""
+• Free tier is very limited (read-only, low rate limits)
+• Basic tier ($100/month) recommended for scraping
+• You need a Twitter Developer Account""",
+                 justify='left').pack(anchor='w', pady=(2, 0))
+        
+        # Step 1 with clickable link
+        ttk.Label(content, text="1. Go to Twitter Developer Portal:", 
+                 font=('TkDefaultFont', 10, 'bold')).pack(anchor='w', pady=(10, 2))
+        
+        link1_frame = ttk.Frame(content)
+        link1_frame.pack(anchor='w', padx=20)
+        link1 = tk.Text(link1_frame, height=1, width=50, wrap='none', relief='flat', 
+                       bg=dialog.cget('bg'), font=('TkDefaultFont', 9), cursor='hand2')
+        link1.insert('1.0', 'https://developer.twitter.com/')
+        link1.config(state='disabled', fg='blue')
+        link1.pack(side='left')
+        link1.bind('<Button-1>', lambda e: self._copy_and_open('https://developer.twitter.com/'))
+        
+        ttk.Label(content, text="   (Click to copy and open)", 
+                 foreground='gray', font=('TkDefaultFont', 8)).pack(anchor='w', padx=20)
+        
+        # Instructions
+        instructions = """
+2. Sign up for a Developer Account:
    • Click "Sign up" in the top right
    • Apply for a developer account
    • Fill out the application form
@@ -1773,12 +1908,46 @@ Steps:
    • Bearer Token (required for Twitter API v2)
    • API Key, API Secret
    • Access Token, Access Token Secret
-
-Note: Keep all tokens private! Never share them.
-
-For free tier, consider using alternative Twitter scrapers.
 """
-        messagebox.showinfo("Twitter API Help", help_text)
+        ttk.Label(content, text=instructions, justify='left').pack(anchor='w', pady=(10, 5))
+        
+        # Note
+        note_frame = ttk.Frame(content, relief='solid', borderwidth=1, padding=10)
+        note_frame.pack(fill='x', pady=(10, 5))
+        ttk.Label(note_frame, text="💡 Alternative Option:", 
+                 font=('TkDefaultFont', 10, 'bold'), foreground='#3498db').pack(anchor='w')
+        ttk.Label(note_frame, text="""For free tier limitations, consider using alternative Twitter scrapers
+or third-party tools that don't require paid API access.""",
+                 wraplength=600, justify='left').pack(anchor='w', pady=(2, 0))
+        
+        # Security note
+        security_frame = ttk.Frame(content, relief='solid', borderwidth=1, padding=10)
+        security_frame.pack(fill='x', pady=(10, 5))
+        ttk.Label(security_frame, text="🔒 Security Note:", 
+                 font=('TkDefaultFont', 10, 'bold'), foreground='#27ae60').pack(anchor='w')
+        ttk.Label(security_frame, text="Keep all tokens private! Never share them publicly.",
+                 wraplength=600).pack(anchor='w', pady=(2, 0))
+        
+        # Pack canvas and scrollbar
+        canvas.pack(side=tk.LEFT, fill='both', expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill='y')
+        
+        # Close button
+        ttk.Button(dialog, text="Close", command=dialog.destroy).pack(pady=10)
+    
+    def _copy_and_open(self, url):
+        """Copy URL to clipboard and open in browser"""
+        import webbrowser
+        try:
+            # Copy to clipboard
+            self.root.clipboard_clear()
+            self.root.clipboard_append(url)
+            # Open in browser
+            webbrowser.open(url)
+            self.log(f"📋 Copied and opened: {url}")
+        except Exception as e:
+            self.log(f"Error opening URL: {e}")
+            messagebox.showinfo("URL", f"Link:\n\n{url}\n\nCopied to clipboard!")
     
     def _show_onlyfans_api_help(self):
         """Show instructions for obtaining OnlyFans API access"""
