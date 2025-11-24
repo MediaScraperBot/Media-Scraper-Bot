@@ -315,7 +315,8 @@ class ScraperGUI:
         # Initialize scrapers (will be created when needed)
         self.reddit_scraper = None
         self.twitter_scraper = None
-        self.website_scraper = WebsiteScraper(history=self.download_history, aggressive_popup=True, duplicate_checker=self.duplicate_checker)
+        # Website scraper will be created with cookies/headers from config when needed
+        self.website_scraper = self._create_website_scraper()
         
         # Initialize sitemap scanner and gallery-dl downloader
         self.sitemap_scanner = SitemapScanner()
@@ -1529,6 +1530,39 @@ Ctrl+Tab - Switch Between Tabs"""
         
         download_frame.columnconfigure(1, weight=1)
         
+        # Website Authentication Settings
+        web_auth_header = ttk.Frame(scrollable_frame)
+        web_auth_header.pack(fill='x', padx=10, pady=(5,0))
+        
+        web_auth_frame = ttk.LabelFrame(web_auth_header, text="Website Authentication (Advanced)", padding=10, relief='solid', borderwidth=1)
+        web_auth_frame.pack(side=tk.LEFT, fill='both', expand=True)
+        
+        web_auth_help_btn = ttk.Button(web_auth_header, text="?", width=3, command=self._show_web_auth_help)
+        web_auth_help_btn.pack(side=tk.LEFT, padx=5)
+        
+        ttk.Label(web_auth_frame, text="ℹ️ Add cookies and custom headers for sites that require authentication", 
+                 foreground='#e67e22', font=('TkDefaultFont', 9, 'bold')).pack(anchor='w', pady=5)
+        
+        # Cookies section
+        ttk.Label(web_auth_frame, text="Cookies (for HTTP 401/403 errors):").pack(anchor='w', pady=(5,2))
+        cookies_help = ttk.Label(web_auth_frame, text="Format: cookie_name=value; another_cookie=value", 
+                                 foreground="gray", font=('TkDefaultFont', 8))
+        cookies_help.pack(anchor='w')
+        
+        self.website_cookies = tk.Text(web_auth_frame, height=3, width=60, wrap='word')
+        self.website_cookies.pack(fill='x', pady=2)
+        self.website_cookies.insert('1.0', str(self.config.get('website.cookies', '')))
+        
+        # Custom headers section
+        ttk.Label(web_auth_frame, text="Custom Headers (one per line):").pack(anchor='w', pady=(10,2))
+        headers_help = ttk.Label(web_auth_frame, text="Format: Header-Name: value", 
+                                foreground="gray", font=('TkDefaultFont', 8))
+        headers_help.pack(anchor='w')
+        
+        self.website_headers = tk.Text(web_auth_frame, height=4, width=60, wrap='word')
+        self.website_headers.pack(fill='x', pady=2)
+        self.website_headers.insert('1.0', str(self.config.get('website.custom_headers', '')))
+        
         # History management
         history_frame = ttk.LabelFrame(scrollable_frame, text="Download History", padding=10, relief='solid', borderwidth=1)
         history_frame.pack(fill='x', padx=10, pady=5)
@@ -1964,6 +1998,141 @@ or third-party tools that don't require paid API access.""",
         except Exception as e:
             self.log(f"Error opening URL: {e}")
             messagebox.showinfo("URL", f"Link:\n\n{url}\n\nCopied to clipboard!")
+    
+    def _create_website_scraper(self, max_workers=3):
+        """Create WebsiteScraper with cookies and custom headers from config"""
+        return WebsiteScraper(
+            history=self.download_history,
+            max_workers=max_workers,
+            aggressive_popup=True,
+            duplicate_checker=self.duplicate_checker,
+            cookies=self.config.get('website.cookies', ''),
+            custom_headers=self.config.get('website.custom_headers', '')
+        )
+    
+    def _show_web_auth_help(self):
+        """Show instructions for getting cookies and headers from browser"""
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Website Authentication Help")
+        dialog.geometry("750x700")
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Main frame with scrollbar
+        main_frame = ttk.Frame(dialog, padding=10)
+        main_frame.pack(fill='both', expand=True)
+        
+        canvas = tk.Canvas(main_frame)
+        scrollbar = ttk.Scrollbar(main_frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Content
+        content = ttk.Frame(scrollable_frame, padding=10)
+        content.pack(fill='both', expand=True)
+        
+        ttk.Label(content, text="🔐 How to Fix HTTP 401 & 403 Errors", 
+                 font=('TkDefaultFont', 12, 'bold')).pack(anchor='w', pady=(0, 10))
+        
+        # Warning
+        warning_frame = ttk.Frame(content, relief='solid', borderwidth=1, padding=10)
+        warning_frame.pack(fill='x', pady=(5, 10))
+        
+        ttk.Label(warning_frame, text="⚠️ When You Need This:", 
+                 font=('TkDefaultFont', 10, 'bold'), foreground='orange').pack(anchor='w')
+        ttk.Label(warning_frame, text="""
+• HTTP 401 Unauthorized: Site requires login cookies
+• HTTP 403 Forbidden: Site blocking your request
+• Some sites need authentication to download media""",
+                 justify='left').pack(anchor='w', pady=(2, 0))
+        
+        # Instructions
+        ttk.Label(content, text="🍪 How to Get Cookies from Your Browser:", 
+                 font=('TkDefaultFont', 10, 'bold')).pack(anchor='w', pady=(10, 5))
+        
+        instructions = """1. Log into the website in your browser (Chrome/Firefox/Edge)
+
+2. Open Developer Tools:
+   • Press F12 (or Right-click → Inspect)
+   • Click "Application" tab (Chrome) or "Storage" tab (Firefox)
+
+3. Find Cookies:
+   • In left panel, expand "Cookies"
+   • Click on the website domain
+   • Copy important cookie values (usually named: session, auth, token, etc.)
+
+4. Format for Settings:
+   • One cookie: cookie_name=value
+   • Multiple: cookie1=value1; cookie2=value2; cookie3=value3
+   
+   Example:
+   session_id=abc123xyz; auth_token=def456; user_id=789
+
+5. Paste into "Cookies" field in Settings → Save Settings"""
+        
+        ttk.Label(content, text=instructions, justify='left').pack(anchor='w', pady=(0, 10))
+        
+        # Headers section
+        ttk.Label(content, text="📋 Custom Headers (Advanced):", 
+                 font=('TkDefaultFont', 10, 'bold')).pack(anchor='w', pady=(10, 5))
+        
+        headers_info = """If cookies don't work, some sites need custom headers:
+
+1. In Developer Tools, go to "Network" tab
+2. Reload the page
+3. Click on any request to the site
+4. Look at "Request Headers" section
+5. Common headers to copy:
+   • User-Agent: (your browser version)
+   • Referer: (the page URL)
+   • Authorization: (if present)
+
+Format (one per line):
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0
+Referer: https://example.com/
+Authorization: Bearer abc123xyz"""
+        
+        ttk.Label(content, text=headers_info, justify='left').pack(anchor='w', pady=(0, 10))
+        
+        # Examples
+        example_frame = ttk.Frame(content, relief='solid', borderwidth=1, padding=10)
+        example_frame.pack(fill='x', pady=(10, 5))
+        ttk.Label(example_frame, text="💡 Common Scenarios:", 
+                 font=('TkDefaultFont', 10, 'bold'), foreground='#3498db').pack(anchor='w')
+        
+        examples = """
+• Paywalled sites: Need cookies from your logged-in browser session
+• CDNs (like cinema-dell.noortg.com): May need Referer header
+• API-based sites: May need Authorization token
+• Private content: Need authentication cookies from account"""
+        
+        ttk.Label(example_frame, text=examples, justify='left', wraplength=650).pack(anchor='w', pady=(2, 0))
+        
+        # Security note
+        security_frame = ttk.Frame(content, relief='solid', borderwidth=1, padding=10)
+        security_frame.pack(fill='x', pady=(10, 5))
+        ttk.Label(security_frame, text="🔒 Security Warning:", 
+                 font=('TkDefaultFont', 10, 'bold'), foreground='#e74c3c').pack(anchor='w')
+        ttk.Label(security_frame, text="""Cookies contain sensitive login information!
+• Only use cookies from YOUR OWN logged-in sessions
+• Never share your cookies publicly
+• Cookies expire - you may need to update them periodically
+• This may violate some website Terms of Service""",
+                 wraplength=650, justify='left').pack(anchor='w', pady=(2, 0))
+        
+        # Pack canvas and scrollbar
+        canvas.pack(side=tk.LEFT, fill='both', expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill='y')
+        
+        # Close button
+        ttk.Button(dialog, text="Close", command=dialog.destroy).pack(pady=10)
     
     def _show_onlyfans_api_help(self):
         """Show instructions for obtaining OnlyFans API access"""
@@ -2427,9 +2596,14 @@ Duplicate Detection:
         self.config.set('downloads.base_path', self.download_path.get())
         self.config.set('downloads.redownload_deleted_files', self.redownload_deleted.get())
         
+        # Website authentication settings
+        self.config.set('website.cookies', self.website_cookies.get('1.0', 'end-1c').strip())
+        self.config.set('website.custom_headers', self.website_headers.get('1.0', 'end-1c').strip())
+        
         # Reset scrapers to use new credentials
         self.reddit_scraper = None
         self.twitter_scraper = None
+        self.website_scraper = None  # Reset website scraper to pick up new cookies/headers
         
         messagebox.showinfo("Success", "Settings saved successfully")
         self.log("Settings saved")
@@ -2904,12 +3078,14 @@ Duplicate Detection:
             except Exception:
                 workers = 5
             
-            # Reinitialize website scraper with new worker count
+            # Reinitialize website scraper with new worker count and auth settings
             self.website_scraper = WebsiteScraper(
                 history=self.download_history,
                 max_workers=workers,
                 aggressive_popup=bool(self.website_aggressive_popup_var.get()),
-                duplicate_checker=self.duplicate_checker
+                duplicate_checker=self.duplicate_checker,
+                cookies=self.config.get('website.cookies', ''),
+                custom_headers=self.config.get('website.custom_headers', '')
             )
             self.log(f"Aggressive popup removal: {'ON' if self.website_aggressive_popup_var.get() else 'OFF'}")
             self.log(f"Using {workers} concurrent workers for downloading")

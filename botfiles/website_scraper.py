@@ -36,7 +36,7 @@ class WebsiteScraper:
         aggressive_popup: if True, perform aggressive popup / overlay removal during Playwright rendering
     """
     
-    def __init__(self, history=None, max_workers=3, aggressive_popup=True, duplicate_checker=None):
+    def __init__(self, history=None, max_workers=3, aggressive_popup=True, duplicate_checker=None, cookies=None, custom_headers=None):
         self.session = requests.Session()
         # Optimize connection pooling for faster downloads
         from requests.adapters import HTTPAdapter
@@ -55,9 +55,46 @@ class WebsiteScraper:
         )
         self.session.mount('http://', adapter)
         self.session.mount('https://', adapter)
+        
+        # Set default headers with more complete browser mimicry
         self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Cache-Control': 'max-age=0'
         })
+        
+        # Apply custom cookies if provided (format: "cookie1=value1; cookie2=value2")
+        if cookies:
+            try:
+                cookie_dict = {}
+                for cookie in cookies.split(';'):
+                    cookie = cookie.strip()
+                    if '=' in cookie:
+                        name, value = cookie.split('=', 1)
+                        cookie_dict[name.strip()] = value.strip()
+                for name, value in cookie_dict.items():
+                    self.session.cookies.set(name, value)
+            except Exception:
+                pass  # Silently ignore malformed cookies
+        
+        # Apply custom headers if provided (format: one per line "Header-Name: value")
+        if custom_headers:
+            try:
+                for line in custom_headers.strip().split('\n'):
+                    line = line.strip()
+                    if ':' in line:
+                        name, value = line.split(':', 1)
+                        self.session.headers[name.strip()] = value.strip()
+            except Exception:
+                pass  # Silently ignore malformed headers
+        
         self.history = history if history else DownloadHistory()
         self.duplicate_checker = duplicate_checker
         self.gallery_dl = GalleryDLDownloader()
