@@ -88,7 +88,7 @@ Do **NOT** use this tool for:
 
 - **Python 3.8+**
 - **Windows OS** (tested on Windows 10/11)
-- **Reddit API credentials** (free)
+- **gallery-dl** (automatically installed, no API needed for Reddit)
 - **Twitter API credentials** (optional, paid tier recommended)
 
 ## 🚀 Quick Start
@@ -123,8 +123,9 @@ First time setup will create default config files.
 **Option A: Use GUI (Recommended)**
 1. Run `Launch Media Scraper.bat`
 2. Go to **Settings** tab
-3. Click the **?** button next to Reddit/Twitter API for instructions
-4. Enter your credentials and click **Save**
+3. For Twitter: Click the **?** button for API setup instructions
+4. For Reddit: No setup needed! Uses gallery-dl (click **?** for info)
+5. Enter Twitter credentials (if using) and click **Save**
 
 **Option B: Manual Setup**
 1. Copy template files:
@@ -139,12 +140,11 @@ First time setup will create default config files.
 
 ### 4. Get API Credentials
 
-#### Reddit API (Required for Reddit scraping)
-1. Go to https://www.reddit.com/prefs/apps
-2. Click "Create App" or "Create Another App"
-3. Select "script" type
-4. Set redirect URI to: `http://localhost:8080`
-5. Copy Client ID and Client Secret
+#### Reddit (No API Key Required!)
+- Reddit scraping uses **gallery-dl** - no API credentials needed
+- Works immediately after installation
+- Can scrape public subreddits and user posts without authentication
+- For more info, click the **?** button next to Reddit Settings in the app
 
 #### Twitter API (Optional)
 - Free tier is very limited
@@ -208,7 +208,7 @@ media-scraper-bot/
 ├── Launch Media Scraper.bat   # Windows launcher
 ├── botfiles/
 │   ├── gui.py                 # Main GUI application
-│   ├── reddit_scraper.py      # Reddit API scraper
+│   ├── reddit_scraper.py      # Reddit scraper (uses gallery-dl)
 │   ├── twitter_scraper.py     # Twitter API scraper
 │   ├── website_scraper.py     # Generic website scraper
 │   ├── duplicate_checker.py   # Duplicate detection system
@@ -310,11 +310,10 @@ The creator, contributors, and distributors of this software shall not be held l
 
 ## 🙏 Acknowledgments
 
-- [PRAW](https://praw.readthedocs.io/) - Reddit API wrapper
+- [gallery-dl](https://github.com/mikf/gallery-dl) - Universal media downloader (Reddit, image galleries)
 - [Tweepy](https://www.tweepy.org/) - Twitter API wrapper
 - [Playwright](https://playwright.dev/) - Browser automation
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp) - Video downloader
-- [gallery-dl](https://github.com/mikf/gallery-dl) - Image gallery downloader
 - [OF-DL](https://git.ofdl.tools/sim0n00ps/OF-DL) - OnlyFans downloader
 
 ## 📧 Support

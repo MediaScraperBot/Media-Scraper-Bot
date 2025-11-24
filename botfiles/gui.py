@@ -535,8 +535,9 @@ BY CONTINUING TO USE THIS SOFTWARE, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTO
         # Quick Start section
         self._add_section_header(content_frame, "🚀 Quick Start")
         quick_start = """1. Configure API Credentials (Settings tab)
-   • Click the ? button next to Reddit/Twitter API for instructions
-   • Enter your credentials and click Save
+   • Reddit: No API needed! Uses gallery-dl (click ? for info)
+   • Twitter: Click the ? button for API setup instructions
+   • Enter Twitter credentials and click Save
    
 2. Add Content Sources
    • Reddit: Add subreddits or usernames
@@ -604,8 +605,8 @@ For direct API access (advanced users), click the "Show OnlyFans API Instruction
         
         # Settings Tab section
         self._add_section_header(content_frame, "⚙️ Settings Tab")
-        settings_text = """• API Credentials: Configure Reddit, Twitter API credentials
-• Help Buttons (?): Click for step-by-step credential setup instructions
+        settings_text = """• API Credentials: Configure Twitter API credentials (Reddit uses gallery-dl, no API needed)
+• Help Buttons (?): Click for setup instructions and information
 • Download Path: Set where media files are saved
 • OnlyFans Options: Configure what content types to download
 • Auto-Organize: Automatically organize downloads by source on startup
@@ -1309,32 +1310,22 @@ Ctrl+Tab - Switch Between Tabs"""
         canvas.bind("<Enter>", lambda e: canvas.bind_all("<MouseWheel>", _on_mousewheel))
         canvas.bind("<Leave>", lambda e: canvas.unbind_all("<MouseWheel>"))
         
-        # Reddit settings
+        # Reddit settings (no API key required - uses gallery-dl)
         reddit_header = ttk.Frame(scrollable_frame)
         reddit_header.pack(fill='x', padx=10, pady=(5,0))
         
-        reddit_frame = ttk.LabelFrame(reddit_header, text="Reddit API Settings", padding=10, relief='solid', borderwidth=1)
+        reddit_frame = ttk.LabelFrame(reddit_header, text="Reddit Settings", padding=10, relief='solid', borderwidth=1)
         reddit_frame.pack(side=tk.LEFT, fill='both', expand=True)
         
         reddit_help_btn = ttk.Button(reddit_header, text="?", width=3, command=self._show_reddit_api_help)
         reddit_help_btn.pack(side=tk.LEFT, padx=5)
         
-        ttk.Label(reddit_frame, text="Client ID:").grid(row=0, column=0, sticky='w', pady=2)
-        self.reddit_client_id = ttk.Entry(reddit_frame, width=50)
-        self.reddit_client_id.grid(row=0, column=1, sticky='ew', pady=2, padx=5)
-        self.reddit_client_id.insert(0, str(self.config.get('reddit.client_id', '')))
+        ttk.Label(reddit_frame, text="ℹ️ Reddit scraping uses gallery-dl (no API key needed)", 
+                 foreground='#27ae60', font=('TkDefaultFont', 9, 'bold')).pack(anchor='w', pady=5)
+        ttk.Label(reddit_frame, text="gallery-dl will be automatically used for downloading Reddit content.", 
+                 wraplength=500).pack(anchor='w', pady=2)
         
-        ttk.Label(reddit_frame, text="Client Secret:").grid(row=1, column=0, sticky='w', pady=2)
-        self.reddit_client_secret = ttk.Entry(reddit_frame, width=50, show='*')
-        self.reddit_client_secret.grid(row=1, column=1, sticky='ew', pady=2, padx=5)
-        self.reddit_client_secret.insert(0, str(self.config.get('reddit.client_secret', '')))
-        
-        ttk.Label(reddit_frame, text="User Agent:").grid(row=2, column=0, sticky='w', pady=2)
-        self.reddit_user_agent = ttk.Entry(reddit_frame, width=50)
-        self.reddit_user_agent.grid(row=2, column=1, sticky='ew', pady=2, padx=5)
-        self.reddit_user_agent.insert(0, str(self.config.get('reddit.user_agent', 'MediaScraper/1.0')))
-        
-        reddit_frame.columnconfigure(1, weight=1)
+        reddit_frame.columnconfigure(0, weight=1)
         
         # Twitter settings
         twitter_header = ttk.Frame(scrollable_frame)
@@ -1711,11 +1702,11 @@ Ctrl+Tab    Switch Tabs
         messagebox.showinfo("Keyboard Shortcuts", shortcuts)
     
     def _show_reddit_api_help(self):
-        """Show instructions for obtaining Reddit API credentials with clickable links"""
-        # Create a custom dialog with clickable links
+        """Show instructions for using gallery-dl with Reddit"""
+        # Create a custom dialog
         dialog = tk.Toplevel(self.root)
-        dialog.title("Reddit API Help")
-        dialog.geometry("700x600")
+        dialog.title("Reddit Help")
+        dialog.geometry("600x450")
         dialog.transient(self.root)
         dialog.grab_set()
         
@@ -1739,83 +1730,57 @@ Ctrl+Tab    Switch Tabs
         content = ttk.Frame(scrollable_frame, padding=10)
         content.pack(fill='both', expand=True)
         
-        ttk.Label(content, text="📝 How to Get Reddit API Credentials", 
+        ttk.Label(content, text="📝 Reddit Scraping with gallery-dl", 
                  font=('TkDefaultFont', 12, 'bold')).pack(anchor='w', pady=(0, 10))
         
-        # Step 1 with clickable link
-        ttk.Label(content, text="1. Go to Reddit Apps page:", 
-                 font=('TkDefaultFont', 10, 'bold')).pack(anchor='w', pady=(5, 2))
-        
-        link1_frame = ttk.Frame(content)
-        link1_frame.pack(anchor='w', padx=20)
-        link1 = tk.Text(link1_frame, height=1, width=50, wrap='none', relief='flat', 
-                       bg=dialog.cget('bg'), font=('TkDefaultFont', 9), cursor='hand2')
-        link1.insert('1.0', 'https://www.reddit.com/prefs/apps')
-        link1.config(state='disabled', fg='blue')
-        link1.pack(side='left')
-        link1.bind('<Button-1>', lambda e: self._copy_and_open('https://www.reddit.com/prefs/apps'))
-        
-        ttk.Label(content, text="   (Click to copy and open)", 
-                 foreground='gray', font=('TkDefaultFont', 8)).pack(anchor='w', padx=20)
+        ttk.Label(content, text="✅ No API Key Required!", 
+                 font=('TkDefaultFont', 10, 'bold'), foreground='#27ae60').pack(anchor='w', pady=(5, 10))
         
         # Instructions
-        instructions = """
-2. Scroll down and click "Create App" or "Create Another App"
+        instructions = """This scraper uses gallery-dl to download Reddit content.
+No Reddit API credentials are needed!
 
-3. Fill out the form:
-   • Name: Choose any name (e.g., "MediaScraper")
-   • App type: Select "script"
-   • Description: Optional
-   • About URL: Leave blank
-   • Redirect URI: http://localhost:8080
+How to use:
 
-4. Click "Create app"
+1. Enter a subreddit name (e.g., "pics", "wallpapers")
+   OR a Reddit username
 
-5. Copy your credentials:
-   • Client ID: The string under your app name
-     (looks like: 3m0Ss-YW_PxanS2APjoIFg)
-   • Client Secret: The "secret" field
-     (longer alphanumeric string)
-   • User Agent: Use format "YourAppName/1.0"
-     (e.g., "MediaScraper/1.0")
+2. Click "Scrape" to download media
 
-6. Paste these values into the Settings tab and click Save
+3. gallery-dl will automatically download:
+   • Images from posts
+   • Videos from posts
+   • Gallery albums
+   • Crossposts
+
+Note: gallery-dl scrapes public Reddit content without authentication.
+For private or age-restricted content, you may need to configure
+browser cookies in gallery-dl's configuration file.
 """
-        ttk.Label(content, text=instructions, justify='left').pack(anchor='w', pady=(10, 5))
+        ttk.Label(content, text=instructions, justify='left').pack(anchor='w', pady=(5, 10))
         
-        # Error message section
-        error_frame = ttk.Frame(content, relief='solid', borderwidth=1, padding=10)
-        error_frame.pack(fill='x', pady=(10, 5))
-        
-        ttk.Label(error_frame, text="⚠️ Application Limit Reached?", 
-                 font=('TkDefaultFont', 10, 'bold'), foreground='red').pack(anchor='w')
-        
-        ttk.Label(error_frame, text="""
-If you see an error about reaching the application limit:
-"You cannot create any more applications..."
+        # gallery-dl info
+        info_frame = ttk.Frame(content, relief='solid', borderwidth=1, padding=10)
+        info_frame.pack(fill='x', pady=(10, 5))
+        ttk.Label(info_frame, text="ℹ️ About gallery-dl:", 
+                 font=('TkDefaultFont', 10, 'bold'), foreground='#3498db').pack(anchor='w')
+        ttk.Label(info_frame, text="""gallery-dl is a command-line program to download image galleries
+and media from multiple websites, including Reddit.
 
-You need to contact Reddit Support:""", 
-                 justify='left').pack(anchor='w', pady=(5, 2))
+Documentation:""",
+                 justify='left', wraplength=550).pack(anchor='w', pady=(2, 2))
         
-        link2_frame = ttk.Frame(error_frame)
-        link2_frame.pack(anchor='w', padx=10)
-        link2 = tk.Text(link2_frame, height=2, width=60, wrap='word', relief='flat',
-                       bg=error_frame.cget('bg'), font=('TkDefaultFont', 9), cursor='hand2')
-        link2.insert('1.0', 'https://support.reddithelp.com/hc/en-us/requests/new?ticket_form_id=14868593862164')
-        link2.config(state='disabled', fg='blue')
-        link2.pack(side='left')
-        link2.bind('<Button-1>', lambda e: self._copy_and_open('https://support.reddithelp.com/hc/en-us/requests/new?ticket_form_id=14868593862164'))
+        link_frame = ttk.Frame(info_frame)
+        link_frame.pack(anchor='w', padx=10)
+        link = tk.Text(link_frame, height=1, width=50, wrap='none', relief='flat',
+                      bg=info_frame.cget('bg'), font=('TkDefaultFont', 9), cursor='hand2')
+        link.insert('1.0', 'https://github.com/mikf/gallery-dl')
+        link.config(state='disabled', fg='blue')
+        link.pack(side='left')
+        link.bind('<Button-1>', lambda e: self._copy_and_open('https://github.com/mikf/gallery-dl'))
         
-        ttk.Label(error_frame, text="   (Click to copy and open support form)", 
+        ttk.Label(info_frame, text="   (Click to copy and open)", 
                  foreground='gray', font=('TkDefaultFont', 8)).pack(anchor='w', padx=10)
-        
-        # Security note
-        note_frame = ttk.Frame(content, relief='solid', borderwidth=1, padding=10)
-        note_frame.pack(fill='x', pady=(10, 5))
-        ttk.Label(note_frame, text="🔒 Security Note:", 
-                 font=('TkDefaultFont', 10, 'bold'), foreground='#27ae60').pack(anchor='w')
-        ttk.Label(note_frame, text="Keep your Client Secret private! Never share it publicly.",
-                 wraplength=600).pack(anchor='w', pady=(2, 0))
         
         # Pack canvas and scrollbar
         canvas.pack(side=tk.LEFT, fill='both', expand=True)
@@ -2373,9 +2338,7 @@ Duplicate Detection:
     
     def save_settings(self):
         """Save settings to config file"""
-        self.config.set('reddit.client_id', self.reddit_client_id.get())
-        self.config.set('reddit.client_secret', self.reddit_client_secret.get())
-        self.config.set('reddit.user_agent', self.reddit_user_agent.get())
+        # Reddit settings removed - gallery-dl doesn't need API credentials
         
         self.config.set('twitter.bearer_token', self.twitter_bearer.get())
         self.config.set('twitter.api_key', self.twitter_api_key.get())

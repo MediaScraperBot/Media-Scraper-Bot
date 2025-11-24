@@ -68,31 +68,19 @@ On first launch, the application will:
 
 ## 🔑 Getting API Credentials
 
-### Reddit API (Required for Reddit scraping)
+### Reddit (No API Key Required! ✅)
 
-1. **Go to Reddit Apps Page**
-   - Visit: https://www.reddit.com/prefs/apps
-   - Log in with your Reddit account
+Reddit scraping uses **gallery-dl** - no API credentials needed!
 
-2. **Create Application**
-   - Scroll down and click **"Create App"** or **"Create Another App"**
-   
-3. **Fill Out Form**
-   - **Name:** `MediaScraper` (or any name you like)
-   - **App type:** Select **"script"**
-   - **Description:** Leave blank or add description
-   - **About URL:** Leave blank
-   - **Redirect URI:** `http://localhost:8080`
+**How it works:**
+- gallery-dl scrapes public Reddit content without authentication
+- Works immediately after installation
+- No setup required
+- Can scrape public subreddits and user posts
 
-4. **Click "Create app"**
+**That's it!** Just enter a subreddit or username in the app and click Scrape.
 
-5. **Copy Credentials**
-   - **Client ID:** Found under your app name (short string like `3m0Ss-YW_PxanS2APjoIFg`)
-   - **Client Secret:** The "secret" field (longer alphanumeric string)
-   - **User Agent:** Use format `YourAppName/1.0` (e.g., `MediaScraper/1.0`)
-
-6. **Enter in Settings Tab**
-   - Open Media Scraper Bot
+For more information, click the **?** button next to Reddit Settings in the app.
    - Go to **Settings** tab
    - Paste Client ID, Client Secret, User Agent
    - Click **Save**
@@ -142,7 +130,7 @@ On first launch, the application will:
 
 ## 🐛 Troubleshooting
 
-### "No module named 'praw'" or similar errors
+### Missing module errors
 ```bash
 # Reinstall dependencies
 pip install -r botfiles/requirements.txt --force-reinstall
@@ -159,9 +147,10 @@ playwright install chromium
 - Check antivirus isn't blocking the app
 
 ### Reddit scraping fails
-- Verify Client ID and Client Secret are correct
-- Check User Agent matches format `AppName/1.0`
-- Ensure Reddit account is in good standing
+- Ensure gallery-dl is installed: `pip install gallery-dl`
+- Check if subreddit/user exists and is public
+- For private content, you may need to configure cookies (see gallery-dl docs)
+- Verify internet connection
 
 ### Twitter scraping fails
 - Verify all 5 credentials are entered correctly
