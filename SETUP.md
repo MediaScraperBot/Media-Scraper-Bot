@@ -44,13 +44,24 @@ python -m venv .venv
 pip install -r botfiles/requirements.txt
 ```
 
-**Optional but Recommended:**
+### Step 4: Install Playwright Browsers (Required for Websites)
+
+**⚠️ Important:** Many websites require JavaScript to load images/videos. Without this step, website scraping will be limited.
+
 ```bash
-# Install Playwright for JavaScript-heavy websites
+# Install Chromium browser for Playwright
 playwright install chromium
 ```
 
-### Step 4: First Launch
+This downloads the Chromium browser (~150MB) that Playwright uses to render JavaScript-heavy websites like:
+- Instagram, Pinterest, Twitter/X
+- Dynamic image galleries
+- Sites with infinite scroll
+- Video hosting sites
+
+**Note:** This is separate from installing the `playwright` Python package. You need both!
+
+### Step 5: First Launch
 
 ```bash
 # Run the application
@@ -136,10 +147,20 @@ For more information, click the **?** button next to Reddit Settings in the app.
 pip install -r botfiles/requirements.txt --force-reinstall
 ```
 
-### Playwright errors
+### Playwright errors / Website scraping shows "using basic scraping"
+
+**Problem:** Playwright package installed but browsers not downloaded
+
+**Solution:**
 ```bash
-# Install Playwright browser
+# Install Chromium browser (required for JavaScript sites)
 playwright install chromium
+```
+
+**Verify it worked:**
+```bash
+# Should show the browser path
+python -c "from playwright.sync_api import sync_playwright; p = sync_playwright().start(); print(p.chromium.executable_path); p.stop()"
 ```
 
 ### "Access Denied" or permission errors

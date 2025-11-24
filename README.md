@@ -112,9 +112,11 @@ python -m venv .venv
 # Install required packages
 pip install -r botfiles/requirements.txt
 
-# Optional: Install Playwright for website scraping
+# Install Playwright browser (required for website scraping)
 playwright install chromium
 ```
+
+**⚠️ Note:** The `playwright install chromium` step is required for scraping websites with JavaScript. Without it, many modern websites won't work properly.
 
 ### 3. Configure API Credentials
 
