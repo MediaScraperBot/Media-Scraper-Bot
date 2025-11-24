@@ -1216,6 +1216,9 @@ class WebsiteScraper:
             
             # Special handling for nsfw.xxx - follow post links to get full images
             if 'nsfw.xxx' in url and '/user/' in url:
+                if progress_callback:
+                    progress_callback(f"🔍 Detected nsfw.xxx user page - looking for post links...")
+                
                 post_links_found = []
                 
                 # Find all links that point to /post/ pages
@@ -1739,7 +1742,9 @@ class WebsiteScraper:
         
         except Exception as e:
             if progress_callback:
+                import traceback
                 progress_callback(f"Error scraping page {url}: {str(e)}")
+                progress_callback(f"Traceback: {traceback.format_exc()[:500]}")
 
         return collected if collect_only else downloaded
     
