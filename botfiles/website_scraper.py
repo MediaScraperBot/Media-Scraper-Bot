@@ -1217,18 +1217,27 @@ class WebsiteScraper:
             # Special handling for nsfw.xxx - follow post links to get full images
             if 'nsfw.xxx' in url and '/user/' in url:
                 post_links_found = []
-                for img in soup.find_all('img'):
-                    src = img.get('src')
-                    if src and '/thumbnails/' in src:
-                        # Try to extract the post link
-                        parent_link = img.find_parent('a')
-                        if parent_link and parent_link.get('href'):
-                            post_url = urljoin(url, parent_link['href'])
-                            if '/post/' in post_url and post_url not in post_links_found:
-                                post_links_found.append(post_url)
                 
-                if progress_callback and post_links_found:
-                    progress_callback(f"Found {len(post_links_found)} nsfw.xxx post links to scrape")
+                # Find all links that point to /post/ pages
+                for a_tag in soup.find_all('a', href=True):
+                    href = a_tag.get('href')
+                    if href and '/post/' in href:
+                        post_url = urljoin(url, href)
+                        if post_url not in post_links_found:
+                            post_links_found.append(post_url)
+                
+                if progress_callback:
+                    if post_links_found:
+                        progress_callback(f"Found {len(post_links_found)} nsfw.xxx post links to scrape")
+                    else:
+                        # Debug: show what we're seeing
+                        all_imgs = soup.find_all('img')
+                        all_links = soup.find_all('a', href=True)
+                        progress_callback(f"⚠️ nsfw.xxx user page: found {len(all_imgs)} images, {len(all_links)} links, but 0 post links")
+                        # Show sample of what links we're seeing
+                        if all_links:
+                            sample_links = [a.get('href', '') for a in all_links[:5]]
+                            progress_callback(f"Sample links: {sample_links}")
                 
                 # Scrape each post page to get full images
                 for post_url in post_links_found:
