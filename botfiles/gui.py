@@ -1234,6 +1234,57 @@ Ctrl+Tab - Switch Between Tabs"""
         ttk.Button(btn_row4, text="Delete All Duplicates (Auto)", command=self.delete_all_duplicates, width=25).pack(side=tk.LEFT, padx=2)
         ttk.Label(btn_row4, text="Automatically delete all duplicates, keeping one from each group", foreground="gray").pack(side=tk.LEFT, padx=10)
         
+        # File Organizer
+        organizer_frame = ttk.LabelFrame(scrollable, text="📁 File Organizer - Collect & Move Media", padding=10)
+        organizer_frame.pack(fill='x', padx=10, pady=5)
+        self.dup_organizer_frame = organizer_frame
+        
+        ttk.Label(organizer_frame, text="Search a directory for media files and move them to a destination folder", 
+                 font=('TkDefaultFont', 9, 'bold'), foreground='#2980b9').pack(anchor='w', pady=(0, 5))
+        
+        # Source directory
+        org_row1 = ttk.Frame(organizer_frame)
+        org_row1.pack(fill='x', pady=2)
+        ttk.Label(org_row1, text="Source directory:").pack(side=tk.LEFT, padx=(0,4))
+        self.organizer_source_var = tk.StringVar(value="")
+        ttk.Entry(org_row1, textvariable=self.organizer_source_var, width=60).pack(side=tk.LEFT, padx=2)
+        ttk.Button(org_row1, text="Browse...", command=self.browse_organizer_source, width=12).pack(side=tk.LEFT, padx=4)
+        
+        # Destination directory
+        org_row2 = ttk.Frame(organizer_frame)
+        org_row2.pack(fill='x', pady=2)
+        ttk.Label(org_row2, text="Destination folder:").pack(side=tk.LEFT, padx=(0,4))
+        self.organizer_dest_var = tk.StringVar(value="")
+        ttk.Entry(org_row2, textvariable=self.organizer_dest_var, width=60).pack(side=tk.LEFT, padx=2)
+        ttk.Button(org_row2, text="Browse...", command=self.browse_organizer_dest, width=12).pack(side=tk.LEFT, padx=4)
+        
+        # File types
+        org_row3 = ttk.Frame(organizer_frame)
+        org_row3.pack(fill='x', pady=4)
+        ttk.Label(org_row3, text="File types to collect:").pack(side=tk.LEFT, padx=(0,6))
+        self.org_images = tk.BooleanVar(value=True)
+        self.org_videos = tk.BooleanVar(value=True)
+        self.org_audio = tk.BooleanVar(value=False)
+        ttk.Checkbutton(org_row3, text="Images (.jpg, .png, .gif, .webp)", variable=self.org_images).pack(side=tk.LEFT, padx=4)
+        ttk.Checkbutton(org_row3, text="Videos (.mp4, .webm, .mov, .avi)", variable=self.org_videos).pack(side=tk.LEFT, padx=4)
+        ttk.Checkbutton(org_row3, text="Audio (.mp3, .wav, .flac)", variable=self.org_audio).pack(side=tk.LEFT, padx=4)
+        
+        # Options
+        org_row4 = ttk.Frame(organizer_frame)
+        org_row4.pack(fill='x', pady=2)
+        self.org_recursive = tk.BooleanVar(value=True)
+        self.org_skip_duplicates = tk.BooleanVar(value=True)
+        ttk.Checkbutton(org_row4, text="Search subdirectories", variable=self.org_recursive).pack(side=tk.LEFT, padx=4)
+        ttk.Checkbutton(org_row4, text="Skip duplicate files (same hash)", variable=self.org_skip_duplicates).pack(side=tk.LEFT, padx=4)
+        
+        # Action buttons
+        org_row5 = ttk.Frame(organizer_frame)
+        org_row5.pack(fill='x', pady=8)
+        ttk.Button(org_row5, text="🔍 Scan & Preview", command=self.organizer_scan_preview, width=20, 
+                  style='Accent.TButton').pack(side=tk.LEFT, padx=4)
+        ttk.Button(org_row5, text="📦 Move Files", command=self.organizer_move_files, width=20).pack(side=tk.LEFT, padx=4)
+        ttk.Label(org_row5, text="← Scan first to see what will be moved", foreground="gray").pack(side=tk.LEFT, padx=10)
+        
         # Statistics
         stats_frame = ttk.LabelFrame(scrollable, text="Statistics & Info", padding=10)
         stats_frame.pack(fill='x', padx=10, pady=5)
@@ -4344,6 +4395,192 @@ Duplicate Detection:
         folder = filedialog.askdirectory(title="Select folder to scan for duplicates")
         if folder:
             self.dup_folder_var.set(folder)
+    
+    def browse_organizer_source(self):
+        """Browse for source directory to organize"""
+        from tkinter import filedialog
+        folder = filedialog.askdirectory(title="Select source directory to search for media files")
+        if folder:
+            self.organizer_source_var.set(folder)
+    
+    def browse_organizer_dest(self):
+        """Browse for destination directory"""
+        from tkinter import filedialog
+        folder = filedialog.askdirectory(title="Select destination folder to move files to")
+        if folder:
+            self.organizer_dest_var.set(folder)
+    
+    def organizer_scan_preview(self):
+        """Scan source directory and preview files that will be moved"""
+        source = self.organizer_source_var.get().strip()
+        if not source or not os.path.isdir(source):
+            messagebox.showwarning("Invalid Source", "Please select a valid source directory.")
+            return
+        
+        # Build extensions list
+        extensions = []
+        if self.org_images.get():
+            extensions.extend(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.avif', '.heic'])
+        if self.org_videos.get():
+            extensions.extend(['.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv', '.wmv', '.m4v'])
+        if self.org_audio.get():
+            extensions.extend(['.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a', '.wma'])
+        
+        if not extensions:
+            messagebox.showwarning("No File Types", "Please select at least one file type to search for.")
+            return
+        
+        self.dup_log_text.delete(1.0, tk.END)
+        self.dup_log_text.insert(tk.END, "🔍 Scanning for media files...\n")
+        self.root.update()
+        
+        # Scan for files
+        found_files = []
+        recursive = self.org_recursive.get()
+        
+        try:
+            if recursive:
+                for root_dir, dirs, files in os.walk(source):
+                    for file in files:
+                        if any(file.lower().endswith(ext) for ext in extensions):
+                            filepath = os.path.join(root_dir, file)
+                            found_files.append(filepath)
+            else:
+                for file in os.listdir(source):
+                    filepath = os.path.join(source, file)
+                    if os.path.isfile(filepath) and any(file.lower().endswith(ext) for ext in extensions):
+                        found_files.append(filepath)
+            
+            # Calculate total size
+            total_size = sum(os.path.getsize(f) for f in found_files if os.path.exists(f))
+            size_mb = total_size / (1024 * 1024)
+            size_gb = size_mb / 1024
+            
+            # Show results
+            result_msg = f"✅ Found {len(found_files)} media files\n"
+            result_msg += f"📦 Total size: {size_gb:.2f} GB ({size_mb:.1f} MB)\n\n"
+            result_msg += "File types breakdown:\n"
+            
+            # Count by extension
+            ext_counts = {}
+            for f in found_files:
+                ext = os.path.splitext(f)[1].lower()
+                ext_counts[ext] = ext_counts.get(ext, 0) + 1
+            
+            for ext, count in sorted(ext_counts.items()):
+                result_msg += f"  {ext}: {count} files\n"
+            
+            result_msg += f"\n📁 Files will be moved to: {self.organizer_dest_var.get()}\n"
+            result_msg += "\nClick 'Move Files' to proceed with the move operation.\n"
+            
+            self.dup_log_text.insert(tk.END, result_msg)
+            
+            # Store found files for move operation
+            self._organizer_found_files = found_files
+            
+        except Exception as e:
+            self.dup_log_text.insert(tk.END, f"\n❌ Error scanning: {str(e)}\n")
+    
+    def organizer_move_files(self):
+        """Move the scanned files to destination"""
+        source = self.organizer_source_var.get().strip()
+        dest = self.organizer_dest_var.get().strip()
+        
+        if not source or not os.path.isdir(source):
+            messagebox.showwarning("Invalid Source", "Please select a valid source directory.")
+            return
+        
+        if not dest:
+            messagebox.showwarning("No Destination", "Please select a destination folder.")
+            return
+        
+        # Check if we have scanned files
+        if not hasattr(self, '_organizer_found_files') or not self._organizer_found_files:
+            response = messagebox.askyesno("Scan First?", 
+                "No files have been scanned yet. Would you like to scan now?")
+            if response:
+                self.organizer_scan_preview()
+                if not hasattr(self, '_organizer_found_files') or not self._organizer_found_files:
+                    return
+            else:
+                return
+        
+        # Confirm move
+        file_count = len(self._organizer_found_files)
+        confirm = messagebox.askyesno("Confirm Move", 
+            f"Move {file_count} files to:\n{dest}\n\nThis operation cannot be undone. Continue?")
+        
+        if not confirm:
+            return
+        
+        # Create destination directory
+        os.makedirs(dest, exist_ok=True)
+        
+        self.dup_log_text.delete(1.0, tk.END)
+        self.dup_log_text.insert(tk.END, f"📦 Moving {file_count} files...\n")
+        self.root.update()
+        
+        moved_count = 0
+        skipped_count = 0
+        error_count = 0
+        skip_duplicates = self.org_skip_duplicates.get()
+        seen_hashes = set()
+        
+        for i, filepath in enumerate(self._organizer_found_files, 1):
+            try:
+                if not os.path.exists(filepath):
+                    skipped_count += 1
+                    continue
+                
+                # Check for duplicates if enabled
+                if skip_duplicates:
+                    import hashlib
+                    with open(filepath, 'rb') as f:
+                        file_hash = hashlib.sha256(f.read()).hexdigest()
+                    if file_hash in seen_hashes:
+                        skipped_count += 1
+                        continue
+                    seen_hashes.add(file_hash)
+                
+                filename = os.path.basename(filepath)
+                dest_path = os.path.join(dest, filename)
+                
+                # Handle filename conflicts
+                counter = 1
+                base, ext = os.path.splitext(filename)
+                while os.path.exists(dest_path):
+                    filename = f"{base}_{counter}{ext}"
+                    dest_path = os.path.join(dest, filename)
+                    counter += 1
+                
+                # Move file
+                import shutil
+                shutil.move(filepath, dest_path)
+                moved_count += 1
+                
+                # Update progress every 10 files
+                if i % 10 == 0:
+                    self.dup_log_text.insert(tk.END, f"Progress: {i}/{file_count} files processed...\n")
+                    self.root.update()
+                
+            except Exception as e:
+                error_count += 1
+                self.dup_log_text.insert(tk.END, f"❌ Error moving {os.path.basename(filepath)}: {str(e)}\n")
+        
+        # Show results
+        result = f"\n✅ Move operation complete!\n"
+        result += f"Moved: {moved_count} files\n"
+        if skipped_count > 0:
+            result += f"Skipped: {skipped_count} files (duplicates or missing)\n"
+        if error_count > 0:
+            result += f"Errors: {error_count} files\n"
+        result += f"\n📁 Files moved to: {dest}\n"
+        
+        self.dup_log_text.insert(tk.END, result)
+        messagebox.showinfo("Move Complete", result)
+        
+        # Clear the found files list
+        self._organizer_found_files = []
     
     def run_folder_duplicates(self):
         """Run duplicate scan on the specific folder selected"""
