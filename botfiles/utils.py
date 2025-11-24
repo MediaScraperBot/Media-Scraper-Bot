@@ -126,16 +126,17 @@ def ensure_download_directory(base_path, subfolder):
 
 def build_download_subfolder(source_type: str, identifier: str) -> str:
     """Return relative subfolder path for a given source type and identifier.
-    Categories create clearer separation: reddit users vs subreddits vs websites.
+    For subreddits and reddit users: just the name (files organized by type inside)
+    For other sources: organized in type folders.
     source_type values (normalized lower): 'reddit_user', 'subreddit', 'website', 'twitter'.
     Unknown types fall back to identifier directly.
     """
     source_type = (source_type or '').lower()
     ident = sanitize_filename(identifier)
     if source_type in ('reddit_user', 'reddit'):  # reddit user profiles
-        return os.path.join('reddit', ident)
+        return ident  # Just username, files organized inside by type
     if source_type in ('subreddit', 'reddit_sub'):  # subreddit collections
-        return os.path.join('subreddit', ident)
+        return ident  # Just subreddit name, files organized inside by type
     if source_type in ('website', 'site'):  # generic websites
         return os.path.join('website', ident)
     if source_type in ('twitter','x'):  # twitter/x profiles

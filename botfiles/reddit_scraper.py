@@ -180,7 +180,34 @@ class RedditScraper:
                     # Add to duplicate tracker
                     self.duplicate_checker.add_file(filepath)
                 
-                downloaded.append(filepath)
+                # Organize by media type: pictures/videos/gifs
+                import shutil
+                ext = os.path.splitext(filename)[1].lower()
+                
+                if ext == '.gif':
+                    media_folder = 'gifs'
+                elif ext in ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv', '.wmv', '.m4v']:
+                    media_folder = 'videos'
+                elif ext in ['.jpg', '.jpeg', '.png', '.webp', '.bmp', '.avif', '.heic']:
+                    media_folder = 'pictures'
+                else:
+                    media_folder = 'other'
+                
+                # Create media type subfolder and move file
+                media_path = os.path.join(download_path, media_folder)
+                os.makedirs(media_path, exist_ok=True)
+                new_filepath = os.path.join(media_path, filename)
+                
+                # Handle filename conflicts
+                counter = 1
+                base, extension = os.path.splitext(filename)
+                while os.path.exists(new_filepath):
+                    filename_new = f"{base}_{counter}{extension}"
+                    new_filepath = os.path.join(media_path, filename_new)
+                    counter += 1
+                
+                shutil.move(filepath, new_filepath)
+                downloaded.append(new_filepath)
                 
                 # Extract post ID from filename (format: reddit_POSTID_01.ext)
                 try:
