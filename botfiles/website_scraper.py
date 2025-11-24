@@ -1214,6 +1214,47 @@ class WebsiteScraper:
                         progress_callback(f"✓ Saved video from iframe: {os.path.basename(filepath)} ({size_mb:.2f} MB)")
                 self._record_history(url, full_url, filepath)
             
+            # Special handling for nsfw.xxx - convert thumbnails to full images
+            if 'nsfw.xxx' in url:
+                for img in soup.find_all('img'):
+                    src = img.get('src')
+                    if src and '/thumbnails/' in src:
+                        # Convert thumbnail URL to full image URL
+                        # Example: /thumbnails/59036/1/file.jpg -> /images/1/27786/file.jpg
+                        full_url = src.replace('/thumbnails/', '/images/')
+                        
+                        # Try to extract the post link to get correct image path
+                        parent_link = img.find_parent('a')
+                        if parent_link and parent_link.get('href'):
+                            post_url = urljoin(url, parent_link['href'])
+                            # Queue the post page itself - we'll extract the full image from there
+                            if '/post/' in post_url:
+                                if should_skip(post_url):
+                                    skipped_media += 1
+                                    continue
+                                
+                                if collect_only:
+                                    queue_candidate(post_url, download_path, force_video=False, history_url=post_url)
+                                    continue
+                                
+                                if progress_callback:
+                                    progress_callback(f"Following nsfw.xxx post: {post_url[:80]}...")
+                                
+                                # Recursively scrape the post page to get full image
+                                post_results = self._scrape_single_page(
+                                    post_url,
+                                    download_path,
+                                    progress_callback=None,  # Silent to avoid spam
+                                    custom_name=custom_name,
+                                    scroll_count=0,  # No need to scroll on post pages
+                                    collect_only=False,
+                                    seen_pairs=seen_pairs
+                                )
+                                if post_results:
+                                    downloaded.extend(post_results)
+                                    new_media += len(post_results)
+                                continue
+            
             # Find all images (check multiple lazy-loading attributes)
             for img in soup.find_all('img'):
                 # Check all common image source attributes
@@ -1231,6 +1272,11 @@ class WebsiteScraper:
                 
                 if src:
                     full_url = urljoin(url, str(src))
+                    
+                    # For nsfw.xxx, skip thumbnails (we already handled them above)
+                    if 'nsfw.xxx' in url and '/thumbnails/' in full_url:
+                        continue
+                    
                     # Check if already downloaded
                     if should_skip(full_url):
                         skipped_media += 1
