@@ -1217,11 +1217,18 @@ class WebsiteScraper:
             # Special handling for nsfw.xxx - follow post links to get full images
             if 'nsfw.xxx' in url and '/user/' in url:
                 if progress_callback:
-                    progress_callback(f"🔍 Detected nsfw.xxx user page - looking for post links...")
+                    progress_callback(f"🔍 Detected nsfw.xxx user page - extracting post links...")
                 
                 post_links_found = []
                 
-                # Find all links that point to /post/ pages
+                # Method 1: Extract from page source using regex (works even if JavaScript hasn't rendered)
+                post_pattern = re.compile(r'https?://nsfw\.xxx/post/(\d+)', re.IGNORECASE)
+                for match in post_pattern.finditer(page_text):
+                    post_url = match.group(0)
+                    if post_url not in post_links_found:
+                        post_links_found.append(post_url)
+                
+                # Method 2: Also check BeautifulSoup parsed links as backup
                 for a_tag in soup.find_all('a', href=True):
                     href = a_tag.get('href')
                     if href and '/post/' in href:
