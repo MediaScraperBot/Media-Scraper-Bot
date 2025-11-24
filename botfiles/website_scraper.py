@@ -1055,6 +1055,37 @@ class WebsiteScraper:
                     cleaned = match.replace(r'\/', '/').replace(r'\u0026', '&').replace(r'\/', '/').strip()
                     if cleaned.startswith('http'):
                         text_video_urls.add(cleaned)
+                
+                # Also extract image URLs from page text (for lazy-loaded images)
+                text_image_urls = set()
+                image_pattern = re.compile(r'https?://[^"\'\s<>]+?\.(?:jpg|jpeg|png|gif|webp|avif)(?:\?[^"\'\s<>]*)?', re.IGNORECASE)
+                image_matches = image_pattern.findall(page_text)
+                for match in image_matches:
+                    if match.startswith('http'):
+                        text_image_urls.add(match)
+                
+                if text_image_urls and progress_callback:
+                    progress_callback(f"Found {len(text_image_urls)} image URLs in page source")
+                
+                # Download images found in text (lazy-loaded, background images, etc.)
+                for media_url in text_image_urls:
+                    # Skip obvious thumbnails
+                    if any(pattern in media_url.lower() for pattern in ['thumb', 'icon', 'avatar', 'logo', 'badge']):
+                        continue
+                    if should_skip(media_url):
+                        skipped_media += 1
+                        continue
+                    
+                    if collect_only:
+                        queue_candidate(media_url, download_path, force_video=False)
+                        continue
+                    
+                    target_dir, kind = self._media_subdir_for(media_url, download_path)
+                    filepath = self._download_with_fallback(media_url, target_dir, source_url=url, progress_callback=None)  # Silent to avoid spam
+                    if filepath:
+                        downloaded.append(filepath)
+                        new_media += 1
+                    self._record_history(url, media_url, filepath)
 
                 if text_video_urls:
                     if progress_callback:
@@ -1183,16 +1214,30 @@ class WebsiteScraper:
                         progress_callback(f"✓ Saved video from iframe: {os.path.basename(filepath)} ({size_mb:.2f} MB)")
                 self._record_history(url, full_url, filepath)
             
-            # Find all images
+            # Find all images (check multiple lazy-loading attributes)
             for img in soup.find_all('img'):
-                src = img.get('src') or img.get('data-src')
+                # Check all common image source attributes
+                src = (img.get('src') or img.get('data-src') or img.get('data-lazy-src') or 
+                       img.get('data-original') or img.get('data-srcset') or img.get('srcset'))
+                
+                # For srcset, take the first URL
+                if src and 'srcset' in str(img.get('srcset', '')).lower():
+                    srcset = img.get('srcset', '')
+                    if srcset:
+                        # srcset format: "url1 1x, url2 2x" or "url1 100w, url2 200w"
+                        parts = str(srcset).split(',')
+                        if parts:
+                            src = parts[0].strip().split()[0]
+                
                 if src:
                     full_url = urljoin(url, str(src))
                     # Check if already downloaded
                     if should_skip(full_url):
                         skipped_media += 1
                         continue
+                    
                     if collect_only:
+                        queue_candidate(full_url, download_path, force_video=False)
                         continue
                     
                     target_dir, kind = self._media_subdir_for(full_url, download_path)
