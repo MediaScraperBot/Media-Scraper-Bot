@@ -1214,46 +1214,47 @@ class WebsiteScraper:
                         progress_callback(f"✓ Saved video from iframe: {os.path.basename(filepath)} ({size_mb:.2f} MB)")
                 self._record_history(url, full_url, filepath)
             
-            # Special handling for nsfw.xxx - convert thumbnails to full images
-            if 'nsfw.xxx' in url:
+            # Special handling for nsfw.xxx - follow post links to get full images
+            if 'nsfw.xxx' in url and '/user/' in url:
+                post_links_found = []
                 for img in soup.find_all('img'):
                     src = img.get('src')
                     if src and '/thumbnails/' in src:
-                        # Convert thumbnail URL to full image URL
-                        # Example: /thumbnails/59036/1/file.jpg -> /images/1/27786/file.jpg
-                        full_url = src.replace('/thumbnails/', '/images/')
-                        
-                        # Try to extract the post link to get correct image path
+                        # Try to extract the post link
                         parent_link = img.find_parent('a')
                         if parent_link and parent_link.get('href'):
                             post_url = urljoin(url, parent_link['href'])
-                            # Queue the post page itself - we'll extract the full image from there
-                            if '/post/' in post_url:
-                                if should_skip(post_url):
-                                    skipped_media += 1
-                                    continue
-                                
-                                if collect_only:
-                                    queue_candidate(post_url, download_path, force_video=False, history_url=post_url)
-                                    continue
-                                
-                                if progress_callback:
-                                    progress_callback(f"Following nsfw.xxx post: {post_url[:80]}...")
-                                
-                                # Recursively scrape the post page to get full image
-                                post_results = self._scrape_single_page(
-                                    post_url,
-                                    download_path,
-                                    progress_callback=None,  # Silent to avoid spam
-                                    custom_name=custom_name,
-                                    scroll_count=0,  # No need to scroll on post pages
-                                    collect_only=False,
-                                    seen_pairs=seen_pairs
-                                )
-                                if post_results:
-                                    downloaded.extend(post_results)
-                                    new_media += len(post_results)
-                                continue
+                            if '/post/' in post_url and post_url not in post_links_found:
+                                post_links_found.append(post_url)
+                
+                if progress_callback and post_links_found:
+                    progress_callback(f"Found {len(post_links_found)} nsfw.xxx post links to scrape")
+                
+                # Scrape each post page to get full images
+                for post_url in post_links_found:
+                    if should_skip(post_url):
+                        skipped_media += 1
+                        continue
+                    
+                    if progress_callback and not collect_only:
+                        progress_callback(f"Following nsfw.xxx post: {post_url[:80]}...")
+                    
+                    # Recursively scrape the post page (respecting collect_only mode)
+                    post_results = self._scrape_single_page(
+                        post_url,
+                        download_path,
+                        progress_callback=None,  # Silent to avoid spam
+                        custom_name=custom_name,
+                        scroll_count=0,  # No need to scroll on post pages
+                        collect_only=collect_only,  # Preserve the mode
+                        seen_pairs=seen_pairs
+                    )
+                    if collect_only:
+                        collected.extend(post_results)
+                    else:
+                        if post_results:
+                            downloaded.extend(post_results)
+                            new_media += len(post_results)
             
             # Find all images (check multiple lazy-loading attributes)
             for img in soup.find_all('img'):
