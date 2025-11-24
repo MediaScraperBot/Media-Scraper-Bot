@@ -1743,10 +1743,12 @@ class WebsiteScraper:
                     
                     # If no filepath and we have error messages, use them
                     if messages:
-                        # Find the most relevant error message
-                        error_msg = next((m for m in messages if 'error' in m.lower() or 'http' in m.lower() or 'timeout' in m.lower()), None)
+                        # Find the most relevant error message (prioritize HTTP errors)
+                        error_msg = next((m for m in messages if 'HTTP' in m or 'Forbidden' in m or '404' in m or '403' in m), None)
+                        if not error_msg:
+                            error_msg = next((m for m in messages if 'error' in m.lower() or 'failed' in m.lower() or 'timeout' in m.lower()), None)
                         if error_msg:
-                            last_error = error_msg
+                            last_error = error_msg.replace('❌ ', '').replace('✗ ', '')
                     
                     if attempt < max_retries - 1:
                         time.sleep(2 ** attempt)  # Exponential backoff: 1s, 2s, 4s
@@ -1792,7 +1794,9 @@ class WebsiteScraper:
                     elif status == "skipped" and progress_callback:
                         progress_callback(f"⊘ Skipped (already downloaded): {media_url[:60]}")
                     elif progress_callback:
-                        progress_callback(f"✗ Failed: {media_url[:60]} - {status}")
+                        # Show more detailed error message
+                        error_detail = status if status else "unknown error"
+                        progress_callback(f"✗ Failed: {media_url[:80]} - {error_detail}")
                 except Exception as e:
                     if progress_callback:
                         progress_callback(f"✗ Error downloading {media_url[:60]}: {str(e)[:50]}")
@@ -2045,6 +2049,21 @@ class WebsiteScraper:
                 headers['Sec-Fetch-Site'] = 'same-origin'
             
             response = self.session.get(url, timeout=30, stream=True, headers=headers if headers else None)
+            
+            # Check for errors and provide better feedback
+            if response.status_code == 403:
+                if progress_callback:
+                    progress_callback(f"❌ HTTP 403 Forbidden: {url[:80]} - Site blocking access")
+                return None
+            elif response.status_code == 404:
+                if progress_callback:
+                    progress_callback(f"❌ HTTP 404 Not Found: {url[:80]} - File doesn't exist")
+                return None
+            elif response.status_code >= 400:
+                if progress_callback:
+                    progress_callback(f"❌ HTTP {response.status_code}: {url[:80]}")
+                return None
+            
             response.raise_for_status()
 
             # Get filename from URL
